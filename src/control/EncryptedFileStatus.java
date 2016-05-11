@@ -6,10 +6,12 @@ package control;
 public class EncryptedFileStatus {
     private String fileName;
     private boolean isIntegral;
+    private boolean isFolder;
 
-    public EncryptedFileStatus(String fileName, boolean isIntegral) {
+    public EncryptedFileStatus(String fileName, boolean isIntegral, boolean isFolder) {
         this.fileName = fileName;
         this.isIntegral = isIntegral;
+        this.isFolder = isFolder;
     }
 
     public String getFileName() {
@@ -18,5 +20,9 @@ public class EncryptedFileStatus {
 
     public boolean isIntegral() {
         return isIntegral;
+    }
+
+    public boolean isFolder() {
+        return isFolder;
     }
 }

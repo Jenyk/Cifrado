@@ -8,7 +8,7 @@ import java.util.List;
 public interface EncryptionServiceInterface {
     EncryptedFileStatus addFile(RawFile file, String targetPath, String password);
     EncryptedFileStatus moveFile(String oldPath, String newPath, String password);
-    List<EncryptedFileStatus> listFiles(String folderPath, String password);
+    List<EncryptedFileStatus> listFiles(String password);
     boolean deleteFile(String path, String password);
     RawFile getFile(String path, String password);
 }
