@@ -1,13 +1,15 @@
 package control;
 
+import java.io.InputStream;
+
 /**
  * Created by petrkubat on 05/05/16.
  */
 public class RawFile {
     private String fileName;
-    private byte[] data;
+    private InputStream data;
 
-    public RawFile(String fileName, byte[] data) {
+    public RawFile(String fileName, InputStream data) {
         this.fileName = fileName;
         this.data = data;
     }
@@ -16,7 +18,7 @@ public class RawFile {
         return fileName;
     }
 
-    public byte[] getData() {
+    public InputStream getData() {
         return data;
     }
 }
