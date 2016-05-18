@@ -23,4 +23,6 @@ public interface FileSystemServiceInterface {
     void moveFile(String oldPath, String newPath);
 
     void deleteFile(String path) throws InvalidPathException, IOException;
+
+    // TODO: mazání složek?
 }

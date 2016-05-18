@@ -2,7 +2,6 @@ package filesystem;
 
 import filesystem.exceptions.InvalidPathException;
 import filesystem.exceptions.PathCollisionException;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -16,7 +15,10 @@ import java.util.stream.Collectors;
  * Created by petrkubat on 16/05/16.
  */
 public class LocalFileStorage implements FileSystemServiceInterface {
+
     private Path rootDirPath;
+
+    // TODO: Logging
 
     public LocalFileStorage(String rootDirectory) {
         this.rootDirPath = Paths.get(rootDirectory);
@@ -88,6 +90,7 @@ public class LocalFileStorage implements FileSystemServiceInterface {
             throw new InvalidPathException("Target file doesn't exist.");
         }
 
+        // TODO: secure delete - přepsat místo v paměti
         Files.delete(targetPath);
     }
 }

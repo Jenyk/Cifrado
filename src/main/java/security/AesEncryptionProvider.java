@@ -2,7 +2,7 @@ package security;
 
 import org.apache.commons.io.IOUtils;
 import security.exceptions.EncryptionException;
-
+import security.exceptions.KeyGenerationException;
 import javax.crypto.*;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.PBEKeySpec;
@@ -15,6 +15,7 @@ import java.security.InvalidKeyException;
 import java.security.Key;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
+import java.security.spec.InvalidParameterSpecException;
 
 /**
  * Created by jan on 16.5.16.
@@ -23,30 +24,31 @@ public class AesEncryptionProvider implements EncryptionProviderInterface {
 
     private static int keySize;
     private static int iterationCount;
-    private static String keyGenerationAlgorithm = "PBKDF2WithHmacSHA1";
-    private static String cipherSpec;
+    private static final String KEY_GENERATION_ALGORITHM = "PBKDF2WithHmacSHA1";
+    private static final String CIPHER_SPEC = "AES/CBC/PKCS5Padding";
+    private static final String KEY_SPEC = "AES";
 
-    public AesEncryptionProvider(int keySize, int iterationCount/*, String encryptionMode*/) {
+    // TODO: logging
+
+    public AesEncryptionProvider(int keySize, int iterationCount) {
         this.keySize = keySize;
         this.iterationCount = iterationCount;
-//        this.cipherSpec = "AES/" + encryptionMode + "/PKCS5Padding";
-        cipherSpec = "AES/CBC/PKCS5Padding";
     }
 
     public AesEncryptionProvider() {
         keySize = 128;
         iterationCount = 1546;
-        cipherSpec = "AES/CBC/PKCS5Padding";
     }
 
-
     @Override
-    public InputStream encryptData(InputStream data, String password, String salt) throws EncryptionException {
+    public InputStream encryptData(InputStream data, String password, String salt) throws EncryptionException, InvalidParameterSpecException {
+        checkParams(data, password, salt);
         return AesOperation(data, password, salt, Cipher.ENCRYPT_MODE);
     }
 
     @Override
-    public InputStream decryptData(InputStream data, String password, String salt) throws EncryptionException {
+    public InputStream decryptData(InputStream data, String password, String salt) throws EncryptionException, InvalidParameterSpecException {
+        checkParams(data, password, salt);
         return AesOperation(data, password, salt, Cipher.DECRYPT_MODE);
     }
 
@@ -56,47 +58,72 @@ public class AesEncryptionProvider implements EncryptionProviderInterface {
             Cipher cipher = getCipher(mode, password, salt);
             byte[] inputBytes = IOUtils.toByteArray(data);
             outputBytes = cipher.doFinal(inputBytes);
-        } catch (InvalidKeySpecException e) {
-            throw new EncryptionException(e.getMessage()); // getCipher
-        } catch (NoSuchAlgorithmException e) {
-            throw new EncryptionException(e.getMessage()); // getCipher
-        } catch (NoSuchPaddingException e) {
-            throw new EncryptionException(e.getMessage()); // getCipher
-        } catch (InvalidAlgorithmParameterException e) {
-            throw new EncryptionException(e.getMessage()); // getCipher
-        } catch (InvalidKeyException e) {
-            throw new EncryptionException(e.getMessage()); // getCipher
         } catch (IOException e) {
             throw new EncryptionException(e.getMessage()); // IOUtils.toByteArray
         } catch (IllegalBlockSizeException e) {
-            throw new EncryptionException(e.getMessage()); // doFinal
+            throw new EncryptionException("Illegal block size"); // doFinal
         } catch (BadPaddingException e) {
-            throw new EncryptionException(e.getMessage()); // doFinal
+            throw new EncryptionException("Bad padding"); // doFinal
+        } catch (KeyGenerationException e) {
+            // TODO: log exception, propagate general message
+            throw new EncryptionException(e.getMessage());
         }
         return new ByteArrayInputStream(outputBytes);
     }
 
-    private Cipher getCipher(int mode, String password, String salt) throws InvalidKeySpecException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidAlgorithmParameterException, InvalidKeyException {
+    private Cipher getCipher(int mode, String password, String salt) throws KeyGenerationException, EncryptionException{
         SecretKeySpec key;
         key = getSymetricKey(password, salt);
         IvParameterSpec iv = getIV(key.getEncoded());
-        Cipher cipher = Cipher.getInstance(cipherSpec);
-        cipher.init(mode, key, iv);
+        Cipher cipher;
+        try {
+            cipher = Cipher.getInstance(CIPHER_SPEC);
+        } catch (NoSuchAlgorithmException e) {
+            throw new EncryptionException("No such encryption algorithm: " + CIPHER_SPEC);
+        } catch (NoSuchPaddingException e) {
+            throw new EncryptionException("No such encryption algorithm: " + CIPHER_SPEC);
+        }
+        try {
+            cipher.init(mode, key, iv);
+        } catch (InvalidKeyException e) {
+            throw new EncryptionException("Invalid key used");
+        } catch (InvalidAlgorithmParameterException e) {
+            throw new EncryptionException("Invalid encryption parameters used");
+        }
         return cipher;
     }
 
-    private SecretKeySpec getSymetricKey(String passwordString, String saltString) throws NoSuchAlgorithmException, InvalidKeySpecException {
+    private SecretKeySpec getSymetricKey(String passwordString, String saltString) throws KeyGenerationException {
         char[] password = passwordString.toCharArray();
         byte[] salt = saltString.getBytes();
         PBEKeySpec pbeSpec = new PBEKeySpec(password, salt, iterationCount, keySize);
-        SecretKeyFactory keyFact = SecretKeyFactory.getInstance(keyGenerationAlgorithm);
-        Key key = keyFact.generateSecret(pbeSpec);
+        SecretKeyFactory keyFact;
+        try {
+            keyFact = SecretKeyFactory.getInstance(KEY_GENERATION_ALGORITHM);
+        } catch (NoSuchAlgorithmException e) {
+            throw new KeyGenerationException("No such key generation algorithm: " + KEY_GENERATION_ALGORITHM);
+        }
+        Key key;
+        try {
+            key = keyFact.generateSecret(pbeSpec);
+        } catch (InvalidKeySpecException e) {
+            throw new KeyGenerationException("Invalid PBEKeySpec: " + e.getMessage());
+        }
         byte[] key_bytes = key.getEncoded();
-        SecretKeySpec encKey = new SecretKeySpec(key_bytes, "AES");
+        SecretKeySpec encKey = new SecretKeySpec(key_bytes, KEY_SPEC);
         return encKey;
     }
 
     private IvParameterSpec getIV(byte[] seed) {
         return new IvParameterSpec(seed);
+    }
+
+    private void checkParams(InputStream file, String password, String salt) throws InvalidParameterSpecException {
+        if (file == null || password == null || salt == null) {
+            throw new InvalidParameterSpecException("Parameters cannot be null");
+        }
+        if (password.equals("") || salt.equals("")) {
+            throw new InvalidParameterSpecException("Password and salt cannot be empty");
+        }
     }
 }
