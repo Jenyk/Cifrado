@@ -14,11 +14,11 @@ public interface FileSystemServiceInterface {
 
     void initialize() throws IOException;
 
-    File createFile(InputStream content, String path) throws InvalidPathException, PathCollisionException, IOException;
+    FileRecord createFile(InputStream content, String path) throws InvalidPathException, PathCollisionException, IOException;
 
-    List<File> listFiles(String path) throws InvalidPathException, IOException;
+    List<FileRecord> listFiles(String path) throws InvalidPathException, IOException;
 
-    File getFile(String path) throws InvalidPathException;
+    FileRecord getFile(String path) throws InvalidPathException;
 
     void moveFile(String oldPath, String newPath);
 

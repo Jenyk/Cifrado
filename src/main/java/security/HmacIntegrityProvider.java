@@ -1,8 +1,10 @@
 package security;
 
+import filesystem.FileRecord;
 import filesystem.FileSystemServiceInterface;
-import filesystem.LocalFileStorage;
+import filesystem.local.LocalFileStorage;
 import filesystem.exceptions.InvalidPathException;
+import org.apache.commons.io.IOUtils;
 import security.exceptions.KeyGenerationException;
 import filesystem.exceptions.PathCollisionException;
 import org.apache.commons.io.FileUtils;
@@ -24,7 +26,7 @@ import java.security.spec.InvalidParameterSpecException;
  */
 public class HmacIntegrityProvider implements IntegrityProviderInterface {
 
-    private FileSystemServiceInterface filesystem;
+    private FileSystemServiceInterface fileSystem;
     private static final String MAC_ALGORITHM = "HmacSHA1";
     private static final String KEY_GENERATION_ALGORITHM = "PBKDF2WithHmacSHA1";
     private static final String EXTENSION = ".mac";
@@ -32,12 +34,13 @@ public class HmacIntegrityProvider implements IntegrityProviderInterface {
 
     // TODO: Logging
 
-    public HmacIntegrityProvider(String integrityRoot) {
-        filesystem = new LocalFileStorage(integrityRoot);
+    public HmacIntegrityProvider(FileSystemServiceInterface fileSystem) {
+        this.fileSystem = fileSystem;
     }
 
     @Override
-    public void trackNewFile(File file, String password, String targetPath) throws IntegrityException, InvalidParameterSpecException {
+    public void trackNewFile(FileRecord file, String password) throws IntegrityException, InvalidParameterSpecException {
+        String targetPath = file.getPath();
         checkParams(file, password, targetPath);
         targetPath += EXTENSION;
         try {
@@ -49,7 +52,7 @@ public class HmacIntegrityProvider implements IntegrityProviderInterface {
             // temp file to input stream
             InputStream hashStream = new FileInputStream(temp);
             // save mac data
-            filesystem.createFile(hashStream, targetPath);
+            fileSystem.createFile(hashStream, targetPath);
             // remove temp file
             temp.delete();
         } catch (IOException e) {
@@ -73,7 +76,7 @@ public class HmacIntegrityProvider implements IntegrityProviderInterface {
         path += EXTENSION;
         try {
             // delete mac file
-            filesystem.deleteFile(path);
+            fileSystem.deleteFile(path);
         } catch (InvalidPathException e) {
             throw new IntegrityException(e.getMessage());
         } catch (IOException e) {
@@ -82,18 +85,20 @@ public class HmacIntegrityProvider implements IntegrityProviderInterface {
     }
 
     @Override
-    public boolean checkFileIntegrity(File file, String password, String path) throws IntegrityException, InvalidParameterSpecException {
+    public boolean checkFileIntegrity(FileRecord file, String password) throws IntegrityException, InvalidParameterSpecException {
+        String path = file.getPath();
         checkParams(file, password, path);
         path += EXTENSION;
         try {
             // compute new mac
             String newMac = getMAC(file, password, path);
             // get saved mac from file
-            File macFile = filesystem.getFile(path);
-            BufferedReader macReader = new BufferedReader(new FileReader(macFile));
-            String oldMac = macReader.readLine();
-            // compare
-            return oldMac.equals(newMac);
+            FileRecord macFile = fileSystem.getFile(path);
+            try (BufferedReader macReader = new BufferedReader(new InputStreamReader(macFile.getStream()))) {
+                String oldMac = macReader.readLine();
+                // compare
+                return oldMac.equals(newMac);
+            }
         } catch (IOException e) {
             throw new IntegrityException(e.getMessage());
         } catch (NoSuchAlgorithmException e) {
@@ -105,9 +110,12 @@ public class HmacIntegrityProvider implements IntegrityProviderInterface {
         }
     }
 
-    private String getMAC(File file, String password, String salt) throws KeyGenerationException, IntegrityException, NoSuchAlgorithmException, IOException {
+    private String getMAC(FileRecord file, String password, String salt) throws KeyGenerationException, IntegrityException, NoSuchAlgorithmException, IOException {
         Mac mac = Mac.getInstance(MAC_ALGORITHM);
-        byte[] m = Files.readAllBytes(file.toPath());
+        byte[] m;
+        try (InputStream stream = file.getStream()) {
+            m = IOUtils.toByteArray(stream);
+        }
         // salt = path
         Key key = getKey(password, salt);
         try {
@@ -139,7 +147,7 @@ public class HmacIntegrityProvider implements IntegrityProviderInterface {
         return key;
     }
 
-    private void checkParams(File file, String password, String salt) throws InvalidParameterSpecException {
+    private void checkParams(FileRecord file, String password, String salt) throws InvalidParameterSpecException {
         if (file == null || password == null || salt == null) {
             throw new InvalidParameterSpecException("Parameters cannot be null");
         }

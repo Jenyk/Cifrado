@@ -4,7 +4,10 @@ import basic.EncryptionService;
 import control.EncryptionServiceInterface;
 import control.RawFile;
 import filesystem.FileSystemServiceInterface;
-import filesystem.LocalFileStorage;
+import filesystem.local.LocalFileStorage;
+import filesystem.local.deletion.FileDeleterInterface;
+import filesystem.local.deletion.SecureFileDeleter;
+import filesystem.local.deletion.SimpleFileDeleter;
 import org.apache.commons.io.FileUtils;
 import org.junit.Ignore;
 import security.AesEncryptionProvider;
@@ -24,8 +27,9 @@ public class GlobalTest {
     private static final String DATA_DIRECTORY = "encfs/data";
     private static final String INTEGRITY_DIRECTORY = "encfs/integrity";
     private EncryptionProviderInterface encryptionProvider = new AesEncryptionProvider();
-    private FileSystemServiceInterface fileSystemService = new LocalFileStorage(DATA_DIRECTORY);
-    private IntegrityProviderInterface integrityProvider = new HmacIntegrityProvider(INTEGRITY_DIRECTORY);
+    private FileSystemServiceInterface fileSystemService = new LocalFileStorage(DATA_DIRECTORY, new SecureFileDeleter());
+    private FileSystemServiceInterface hashFileStorage = new LocalFileStorage(INTEGRITY_DIRECTORY, new SimpleFileDeleter());
+    private IntegrityProviderInterface integrityProvider = new HmacIntegrityProvider(hashFileStorage);
     EncryptionServiceInterface service = new EncryptionService(fileSystemService, encryptionProvider, integrityProvider);
 
     @Test
