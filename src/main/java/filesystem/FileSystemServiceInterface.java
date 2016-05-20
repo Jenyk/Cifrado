@@ -18,6 +18,8 @@ public interface FileSystemServiceInterface {
 
     List<FileRecord> listFiles(String path) throws InvalidPathException, IOException;
 
+    List<FileRecord> listFilesRecursive(String path) throws InvalidPathException, IOException;
+
     FileRecord getFile(String path) throws InvalidPathException;
 
     void deleteFile(String path) throws InvalidPathException, IOException;

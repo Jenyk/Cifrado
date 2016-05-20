@@ -17,6 +17,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Created by petrkubat on 16/05/16.
@@ -53,17 +54,28 @@ public class LocalFileStorage implements FileSystemServiceInterface {
         return new LocalFileRecord(path, targetPath);
     }
 
-    @Override
-    public List<FileRecord> listFiles(String path) throws InvalidPathException, IOException {
+    private List<FileRecord> listFiles(String path, boolean recursive) throws InvalidPathException, IOException {
         Path targetPath = pathTranslator.getResourceInternalPath(path);
 
         if (!Files.isDirectory(targetPath)) {
             throw new InvalidPathException("Target is not a folder!");
         }
 
-        return Files.list(targetPath).map(filePath ->
+        Stream<Path> files = recursive ? Files.walk(targetPath) : Files.list(targetPath);
+
+        return files.map(filePath ->
                 new LocalFileRecord(pathTranslator.getResourcePublicPath(filePath), filePath)
         ).collect(Collectors.toList());
+    }
+
+    @Override
+    public List<FileRecord> listFiles(String path) throws InvalidPathException, IOException {
+        return listFiles(path, false);
+    }
+
+    @Override
+    public List<FileRecord> listFilesRecursive(String path) throws InvalidPathException, IOException {
+        return listFiles(path, true);
     }
 
     @Override
