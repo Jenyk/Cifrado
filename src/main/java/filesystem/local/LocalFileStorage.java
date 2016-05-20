@@ -7,6 +7,7 @@ import filesystem.exceptions.PathCollisionException;
 import filesystem.local.deletion.FileDeleterInterface;
 import filesystem.local.paths.PathTranslatorInterface;
 import filesystem.local.paths.SubdirectoryPathTranslator;
+import org.apache.commons.io.FileUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -84,6 +85,43 @@ public class LocalFileStorage implements FileSystemServiceInterface {
             throw new InvalidPathException("Target file doesn't exist.");
         }
 
+        if (!Files.isRegularFile(targetPath)) {
+            throw new InvalidPathException("Target isn't a file.");
+        }
+
         fileDeleter.deleteFile(targetPath);
+    }
+
+    @Override
+    public void createDirectory(String path) throws InvalidPathException, PathCollisionException, IOException {
+        Path targetPath = pathTranslator.getResourceInternalPath(path);
+
+        if (Files.exists(targetPath)) {
+            throw new PathCollisionException("Target path already contains a file or directory.");
+        }
+
+        Files.createDirectories(targetPath);
+    }
+
+    @Override
+    public void deleteDirectory(String path) throws InvalidPathException, IOException {
+        Path targetPath = pathTranslator.getResourceInternalPath(path);
+
+        if (!Files.exists(targetPath)) {
+            throw new InvalidPathException("Target directory doesn't exist.");
+        }
+
+        if (!Files.isDirectory(targetPath)) {
+            throw new InvalidPathException("Target isn't a directory.");
+        }
+
+        // Crawl the directory and delete all the files
+        for (Path file : Files.walk(targetPath).collect(Collectors.toList())) {
+            if (!Files.isDirectory(file)) {
+                fileDeleter.deleteFile(file);
+            }
+        }
+
+        FileUtils.deleteDirectory(targetPath.toFile());
     }
 }

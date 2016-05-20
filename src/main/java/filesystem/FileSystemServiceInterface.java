@@ -22,5 +22,9 @@ public interface FileSystemServiceInterface {
 
     void deleteFile(String path) throws InvalidPathException, IOException;
 
+    void createDirectory (String path) throws InvalidPathException, PathCollisionException, IOException;
+
+    void deleteDirectory(String path) throws InvalidPathException, IOException;
+
     // TODO: mazání složek?
 }
