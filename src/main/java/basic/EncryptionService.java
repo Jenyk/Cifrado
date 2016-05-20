@@ -66,7 +66,7 @@ public class EncryptionService implements EncryptionServiceInterface {
     @Override
     public List<EncryptedFileStatus> listFiles(String path, String password) {
         List<FileRecord> fileList = null;
-        List<EncryptedFileStatus> statusList = new ArrayList<>();
+
         try {
             fileList = fileSystemService.listFiles(path);
         } catch (InvalidPathException e) {
@@ -135,5 +135,30 @@ public class EncryptionService implements EncryptionServiceInterface {
         }
 
         return null;
+    }
+
+    @Override
+    public void createDirectory(String path) {
+        try {
+            fileSystemService.createDirectory(path);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    @Override
+    public void deleteDirectory(String path) {
+        try {
+            // We need to stop integrity tracking for all the files
+
+            for (FileRecord file: fileSystemService.listFilesRecursive(path)) {
+                integrityProvider.stopTrackingFile(file.getPath());
+            }
+
+            fileSystemService.deleteDirectory(path);
+
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
     }
 }

@@ -16,4 +16,8 @@ public interface EncryptionServiceInterface {
     void deleteFile(String path, String password);
 
     RawFile getFile(String path, String password);
+
+    void createDirectory(String path);
+
+    void deleteDirectory(String path);
 }
