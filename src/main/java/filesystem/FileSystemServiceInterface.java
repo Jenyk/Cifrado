@@ -20,8 +20,6 @@ public interface FileSystemServiceInterface {
 
     FileRecord getFile(String path) throws InvalidPathException;
 
-    void moveFile(String oldPath, String newPath);
-
     void deleteFile(String path) throws InvalidPathException, IOException;
 
     // TODO: mazání složek?

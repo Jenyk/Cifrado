@@ -77,11 +77,6 @@ public class LocalFileStorage implements FileSystemServiceInterface {
     }
 
     @Override
-    public void moveFile(String oldPath, String newPath) {
-
-    }
-
-    @Override
     public void deleteFile(String path) throws InvalidPathException, IOException {
         Path targetPath = pathTranslator.getResourceInternalPath(path);
 
