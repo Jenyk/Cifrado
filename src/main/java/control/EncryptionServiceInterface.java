@@ -22,7 +22,7 @@ public interface EncryptionServiceInterface {
     List<EncryptedFileStatus> listFiles(String path, String password) throws InvalidPathException,
             FileSystemException, IntegrityException, InvalidParameterSpecException;
 
-    void deleteFile(String path, String password) throws InvalidPathException,
+    void deleteFile(String path) throws InvalidPathException,
             FileSystemException, IntegrityException, InvalidParameterSpecException;
 
     RawFile getFile(String path, String password) throws EncryptionException,

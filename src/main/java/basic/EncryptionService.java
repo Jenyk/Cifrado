@@ -75,7 +75,7 @@ public class EncryptionService implements EncryptionServiceInterface {
             FileSystemException, IntegrityException, PathCollisionException, InvalidPathException, InvalidParameterSpecException {
         RawFile oldFile = getFile(oldPath, password);
         addFile(oldFile, newPath, password);
-        deleteFile(oldPath, password);
+        deleteFile(oldPath);
     }
 
     @Override
@@ -112,7 +112,7 @@ public class EncryptionService implements EncryptionServiceInterface {
     }
 
     @Override
-    public void deleteFile(String path, String password) throws InvalidPathException,
+    public void deleteFile(String path) throws InvalidPathException,
             FileSystemException, IntegrityException, InvalidParameterSpecException {
         try {
             integrityProvider.stopTrackingFile(path);
