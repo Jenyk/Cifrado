@@ -59,7 +59,7 @@ public class GlobalTest {
 
             // Delete file
             recoveredFile.delete();
-            service.deleteFile(testPath, password);
+            service.deleteFile(testPath);
             File data = new File(DATA_DIRECTORY + "/" + testPath);
             assertFalse(data.exists());
             File mac = new File(DATA_DIRECTORY + "/" + testPath + ".mac");
@@ -110,7 +110,7 @@ public class GlobalTest {
 
 
             // cleanup
-            service.deleteFile(testPath2, password);
+            service.deleteFile(testPath2);
         } catch (Exception e) {
             e.printStackTrace();
         }
