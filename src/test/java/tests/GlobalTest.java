@@ -64,7 +64,7 @@ public class GlobalTest {
             assertFalse(data.exists());
             File mac = new File(DATA_DIRECTORY + "/" + testPath + ".mac");
             assertFalse(mac.exists());
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
@@ -111,7 +111,7 @@ public class GlobalTest {
 
             // cleanup
             service.deleteFile(testPath2, password);
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
