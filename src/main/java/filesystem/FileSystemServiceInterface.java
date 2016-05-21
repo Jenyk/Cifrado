@@ -1,5 +1,6 @@
 package filesystem;
 
+import filesystem.exceptions.FileSystemException;
 import filesystem.exceptions.InvalidPathException;
 import filesystem.exceptions.PathCollisionException;
 import java.io.File;
@@ -12,21 +13,19 @@ import java.util.List;
  */
 public interface FileSystemServiceInterface {
 
-    void initialize() throws IOException;
+    void initialize() throws FileSystemException;
 
-    FileRecord createFile(InputStream content, String path) throws InvalidPathException, PathCollisionException, IOException;
+    FileRecord createFile(InputStream content, String path) throws InvalidPathException, PathCollisionException, FileSystemException;
 
-    List<FileRecord> listFiles(String path) throws InvalidPathException, IOException;
+    List<FileRecord> listFiles(String path) throws InvalidPathException, FileSystemException;
 
-    List<FileRecord> listFilesRecursive(String path) throws InvalidPathException, IOException;
+    List<FileRecord> listFilesRecursive(String path) throws InvalidPathException, FileSystemException;
 
     FileRecord getFile(String path) throws InvalidPathException;
 
-    void deleteFile(String path) throws InvalidPathException, IOException;
+    void deleteFile(String path) throws InvalidPathException, FileSystemException;
 
-    void createDirectory (String path) throws InvalidPathException, PathCollisionException, IOException;
+    void createDirectory (String path) throws InvalidPathException, PathCollisionException, FileSystemException;
 
-    void deleteDirectory(String path) throws InvalidPathException, IOException;
-
-    // TODO: mazání složek?
+    void deleteDirectory(String path) throws InvalidPathException, FileSystemException;
 }

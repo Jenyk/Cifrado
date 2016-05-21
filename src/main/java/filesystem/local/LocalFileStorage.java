@@ -2,6 +2,7 @@ package filesystem.local;
 
 import filesystem.FileRecord;
 import filesystem.FileSystemServiceInterface;
+import filesystem.exceptions.FileSystemException;
 import filesystem.exceptions.InvalidPathException;
 import filesystem.exceptions.PathCollisionException;
 import filesystem.local.deletion.FileDeleterInterface;
@@ -9,6 +10,7 @@ import filesystem.local.paths.PathTranslatorInterface;
 import filesystem.local.paths.SubdirectoryPathTranslator;
 import org.apache.commons.io.FileUtils;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
@@ -35,46 +37,57 @@ public class LocalFileStorage implements FileSystemServiceInterface {
         this.fileDeleter = fileDeleter;
     }
 
-    public void initialize() throws IOException {
+    public void initialize() throws FileSystemException {
         // TODO checks
-        Files.createDirectories(rootDirPath);
+        try {
+            Files.createDirectories(rootDirPath);
+        } catch (IOException ex) {
+            throw new FileSystemException(ex);
+        }
     }
 
     @Override
-    public FileRecord createFile(InputStream content, String path) throws InvalidPathException, PathCollisionException, IOException {
+    public FileRecord createFile(InputStream content, String path) throws InvalidPathException, PathCollisionException, FileSystemException {
         Path targetPath = pathTranslator.getResourceInternalPath(path);
 
         if (Files.exists(targetPath)) {
             throw new PathCollisionException("Target path already contains a file.");
         }
 
-        Files.createDirectories(targetPath.getParent());
-        Files.copy(content, targetPath);
+        try {
+            Files.createDirectories(targetPath.getParent());
+            Files.copy(content, targetPath);
+        } catch (IOException ex) {
+            throw new FileSystemException(ex);
+        }
 
         return new LocalFileRecord(path, targetPath);
     }
 
-    private List<FileRecord> listFiles(String path, boolean recursive) throws InvalidPathException, IOException {
+    private List<FileRecord> listFiles(String path, boolean recursive) throws InvalidPathException, FileSystemException {
         Path targetPath = pathTranslator.getResourceInternalPath(path);
 
         if (!Files.isDirectory(targetPath)) {
             throw new InvalidPathException("Target is not a folder!");
         }
 
-        Stream<Path> files = recursive ? Files.walk(targetPath) : Files.list(targetPath);
-
-        return files.map(filePath ->
-                new LocalFileRecord(pathTranslator.getResourcePublicPath(filePath), filePath)
-        ).collect(Collectors.toList());
+        try {
+            Stream<Path> files = recursive ? Files.walk(targetPath) : Files.list(targetPath);
+            return files.map(filePath ->
+                    new LocalFileRecord(pathTranslator.getResourcePublicPath(filePath), filePath)
+            ).collect(Collectors.toList());
+        } catch (IOException ex) {
+            throw new FileSystemException(ex);
+        }
     }
 
     @Override
-    public List<FileRecord> listFiles(String path) throws InvalidPathException, IOException {
+    public List<FileRecord> listFiles(String path) throws InvalidPathException, FileSystemException {
         return listFiles(path, false);
     }
 
     @Override
-    public List<FileRecord> listFilesRecursive(String path) throws InvalidPathException, IOException {
+    public List<FileRecord> listFilesRecursive(String path) throws InvalidPathException, FileSystemException {
         return listFiles(path, true);
     }
 
@@ -90,7 +103,7 @@ public class LocalFileStorage implements FileSystemServiceInterface {
     }
 
     @Override
-    public void deleteFile(String path) throws InvalidPathException, IOException {
+    public void deleteFile(String path) throws InvalidPathException, FileSystemException {
         Path targetPath = pathTranslator.getResourceInternalPath(path);
 
         if (!Files.exists(targetPath)) {
@@ -101,22 +114,30 @@ public class LocalFileStorage implements FileSystemServiceInterface {
             throw new InvalidPathException("Target isn't a file.");
         }
 
-        fileDeleter.deleteFile(targetPath);
+        try {
+            fileDeleter.deleteFile(targetPath);
+        } catch (IOException ex) {
+            throw new FileSystemException(ex);
+        }
     }
 
     @Override
-    public void createDirectory(String path) throws InvalidPathException, PathCollisionException, IOException {
+    public void createDirectory(String path) throws InvalidPathException, PathCollisionException, FileSystemException {
         Path targetPath = pathTranslator.getResourceInternalPath(path);
 
         if (Files.exists(targetPath)) {
             throw new PathCollisionException("Target path already contains a file or directory.");
         }
 
-        Files.createDirectories(targetPath);
+        try {
+            Files.createDirectories(targetPath);
+        } catch (IOException ex) {
+            throw new FileSystemException(ex);
+        }
     }
 
     @Override
-    public void deleteDirectory(String path) throws InvalidPathException, IOException {
+    public void deleteDirectory(String path) throws InvalidPathException, FileSystemException {
         Path targetPath = pathTranslator.getResourceInternalPath(path);
 
         if (!Files.exists(targetPath)) {
@@ -127,13 +148,17 @@ public class LocalFileStorage implements FileSystemServiceInterface {
             throw new InvalidPathException("Target isn't a directory.");
         }
 
-        // Crawl the directory and delete all the files
-        for (Path file : Files.walk(targetPath).collect(Collectors.toList())) {
-            if (!Files.isDirectory(file)) {
-                fileDeleter.deleteFile(file);
+        try {
+            // Crawl the directory and delete all the files
+            for (Path file : Files.walk(targetPath).collect(Collectors.toList())) {
+                if (!Files.isDirectory(file)) {
+                    fileDeleter.deleteFile(file);
+                }
             }
-        }
 
-        FileUtils.deleteDirectory(targetPath.toFile());
+            FileUtils.deleteDirectory(targetPath.toFile());
+        } catch (IOException ex) {
+            throw new FileSystemException(ex);
+        }
     }
 }
