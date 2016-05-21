@@ -2,6 +2,7 @@ package security;
 
 import filesystem.FileRecord;
 import filesystem.FileSystemServiceInterface;
+import filesystem.exceptions.FileSystemException;
 import filesystem.local.LocalFileStorage;
 import filesystem.exceptions.InvalidPathException;
 import org.apache.commons.io.IOUtils;
@@ -57,6 +58,8 @@ public class HmacIntegrityProvider implements IntegrityProviderInterface {
             temp.delete();
         } catch (IOException e) {
             throw new IntegrityException(e.getMessage());
+        } catch (FileSystemException e) {
+            throw new IntegrityException(e.getMessage());
         } catch (NoSuchAlgorithmException e) {
             throw new IntegrityException("No such MAC algorithm: " + MAC_ALGORITHM);
         } catch (PathCollisionException e) {
@@ -79,7 +82,7 @@ public class HmacIntegrityProvider implements IntegrityProviderInterface {
             fileSystem.deleteFile(path);
         } catch (InvalidPathException e) {
             throw new IntegrityException(e.getMessage());
-        } catch (IOException e) {
+        } catch (FileSystemException e) {
             throw new IntegrityException(e.getMessage());
         }
     }
