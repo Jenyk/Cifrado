@@ -29,8 +29,6 @@ public class LocalFileStorage implements FileSystemServiceInterface {
     private PathTranslatorInterface pathTranslator;
     private FileDeleterInterface fileDeleter;
 
-    // TODO: Logging
-
     public LocalFileStorage(String rootDirectory, FileDeleterInterface fileDeleter) {
         this.rootDirPath = Paths.get(rootDirectory);
         this.pathTranslator = new SubdirectoryPathTranslator(rootDirPath);

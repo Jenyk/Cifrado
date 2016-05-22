@@ -1,5 +1,6 @@
 package security;
 
+import basic.EncryptionService;
 import org.apache.commons.io.IOUtils;
 import security.exceptions.EncryptionException;
 import security.exceptions.KeyGenerationException;
@@ -16,6 +17,8 @@ import java.security.Key;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.InvalidParameterSpecException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Created by jan on 16.5.16.
@@ -27,8 +30,6 @@ public class AesEncryptionProvider implements EncryptionProviderInterface {
     private static final String KEY_GENERATION_ALGORITHM = "PBKDF2WithHmacSHA1";
     private static final String CIPHER_SPEC = "AES/CBC/PKCS5Padding";
     private static final String KEY_SPEC = "AES";
-
-    // TODO: logging
 
     public AesEncryptionProvider(int keySize, int iterationCount) {
         this.keySize = keySize;
@@ -65,7 +66,6 @@ public class AesEncryptionProvider implements EncryptionProviderInterface {
         } catch (BadPaddingException e) {
             throw new EncryptionException("Bad padding"); // doFinal
         } catch (KeyGenerationException e) {
-            // TODO: log exception, propagate general message
             throw new EncryptionException(e.getMessage());
         }
         return new ByteArrayInputStream(outputBytes);

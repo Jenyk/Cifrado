@@ -32,9 +32,6 @@ public class EncryptionService implements EncryptionServiceInterface {
     EncryptionProviderInterface encryptionProvider;
     IntegrityProviderInterface integrityProvider;
 
-    // TODO: Exceptions
-    // TODO: Logging
-
     public EncryptionService(FileSystemServiceInterface fileSystemService, EncryptionProviderInterface encryptionProvider, IntegrityProviderInterface integrityProvider) {
         this.fileSystemService = fileSystemService;
         this.encryptionProvider = encryptionProvider;
@@ -81,7 +78,7 @@ public class EncryptionService implements EncryptionServiceInterface {
     @Override
     public List<EncryptedFileStatus> listFiles(String path, String password) throws InvalidPathException,
             FileSystemException, IntegrityException, InvalidParameterSpecException {
-        List<FileRecord> fileList = null;
+        List<FileRecord> fileList;
 
         try {
             fileList = fileSystemService.listFiles(path);
@@ -97,7 +94,11 @@ public class EncryptionService implements EncryptionServiceInterface {
 
         for (FileRecord fileRecord : fileList) {
             try {
-                boolean integrity = integrityProvider.checkFileIntegrity(fileRecord, password);
+                boolean isDirectory = fileRecord.isDirectory();
+                boolean integrity = true; // true for directories
+                if (!isDirectory) { // check for files
+                    integrity = integrityProvider.checkFileIntegrity(fileRecord, password);
+                }
                 result.add(new EncryptedFileStatus(fileRecord.getPath(), integrity, fileRecord.isDirectory()));
             } catch (IntegrityException e) {
                 log.log(Level.SEVERE, "Error trying to check the file integrity for: " + fileRecord.getPath(), e);
@@ -178,7 +179,6 @@ public class EncryptionService implements EncryptionServiceInterface {
             FileSystemException, InvalidPathException, InvalidParameterSpecException {
         try {
             // We need to stop integrity tracking for all the files
-
             for (FileRecord file: fileSystemService.listFilesRecursive(path)) {
                 integrityProvider.stopTrackingFile(file.getPath());
             }

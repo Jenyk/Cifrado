@@ -33,8 +33,6 @@ public class HmacIntegrityProvider implements IntegrityProviderInterface {
     private static final String EXTENSION = ".mac";
     private static final String TEMP_PATH = "temp";
 
-    // TODO: Logging
-
     public HmacIntegrityProvider(FileSystemServiceInterface fileSystem) {
         this.fileSystem = fileSystem;
     }

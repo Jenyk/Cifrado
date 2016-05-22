@@ -62,14 +62,13 @@ public class GlobalTest {
             service.deleteFile(testPath);
             File data = new File(DATA_DIRECTORY + "/" + testPath);
             assertFalse(data.exists());
-            File mac = new File(DATA_DIRECTORY + "/" + testPath + ".mac");
+            File mac = new File(INTEGRITY_DIRECTORY + "/" + testPath + ".mac");
             assertFalse(mac.exists());
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    @Ignore
     @Test
     public void testMoveFile() {
         String testPath1 = "testFolder1/testFileGlobalMove1.txt";
@@ -88,11 +87,11 @@ public class GlobalTest {
 
             File assertDataFile1 = new File(DATA_DIRECTORY + "/" + testPath1);
             assertTrue(assertDataFile1.exists());
-            File assertMacFile1 = new File(DATA_DIRECTORY + "/" + testPath1 + ".mac");
+            File assertMacFile1 = new File(INTEGRITY_DIRECTORY + "/" + testPath1 + ".mac");
             assertTrue(assertMacFile1.exists());
             File assertDataFile2 = new File(DATA_DIRECTORY + "/" + testPath2);
             assertFalse(assertDataFile2.exists());
-            File assertMacFile2 = new File(DATA_DIRECTORY + "/" + testPath2 + ".mac");
+            File assertMacFile2 = new File(INTEGRITY_DIRECTORY + "/" + testPath2 + ".mac");
             assertFalse(assertMacFile2.exists());
 
 
@@ -101,11 +100,11 @@ public class GlobalTest {
 
             assertDataFile1 = new File(DATA_DIRECTORY + "/" + testPath1);
             assertFalse(assertDataFile1.exists());
-            assertMacFile1 = new File(DATA_DIRECTORY + "/" + testPath1 + ".mac");
+            assertMacFile1 = new File(INTEGRITY_DIRECTORY + "/" + testPath1 + ".mac");
             assertFalse(assertMacFile1.exists());
             assertDataFile2 = new File(DATA_DIRECTORY + "/" + testPath2);
             assertTrue(assertDataFile2.exists());
-            assertMacFile2 = new File(DATA_DIRECTORY + "/" + testPath2 + ".mac");
+            assertMacFile2 = new File(INTEGRITY_DIRECTORY + "/" + testPath2 + ".mac");
             assertTrue(assertMacFile2.exists());
 
 

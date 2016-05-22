@@ -14,7 +14,6 @@ public class RawFile {
         this.data = data;
     }
 
-    // TODO: k čemu je filename? k čemu je RawFile?
     public String getFileName() {
         return fileName;
     }
