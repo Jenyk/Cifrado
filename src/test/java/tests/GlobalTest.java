@@ -1,6 +1,7 @@
 package tests;
 
 import basic.EncryptionService;
+import control.EncryptedFileStatus;
 import control.EncryptionServiceInterface;
 import control.RawFile;
 import filesystem.FileSystemServiceInterface;
@@ -15,7 +16,14 @@ import security.EncryptionProviderInterface;
 import security.HmacIntegrityProvider;
 import security.IntegrityProviderInterface;
 import org.junit.Test;
+import utils.FolderAdder;
+import utils.FolderAdderInterface;
+
 import java.io.*;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.List;
+
 import static org.junit.Assert.*;
 
 
@@ -31,6 +39,29 @@ public class GlobalTest {
     private FileSystemServiceInterface hashFileStorage = new LocalFileStorage(INTEGRITY_DIRECTORY, new SimpleFileDeleter());
     private IntegrityProviderInterface integrityProvider = new HmacIntegrityProvider(hashFileStorage);
     EncryptionServiceInterface service = new EncryptionService(fileSystemService, encryptionProvider, integrityProvider);
+
+    @Test
+    public void testFolderAdder() {
+        Path testFolder = Paths.get("src");
+        String password = "password";
+        String folder = "test/src";
+
+        FolderAdderInterface folderAdder = new FolderAdder(service);
+
+        try {
+            // Add folder
+            folderAdder.addFolder(testFolder, folder, password);
+
+            // Check added files
+            List<EncryptedFileStatus> listedFiles = service.listFiles("test/src", password);
+            assertTrue(listedFiles.size() == 2);
+
+            RawFile file = service.getFile("test/src/main/java/utils/FolderAdder.java", password);
+            assertTrue(file != null);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
     @Test
     public void testAddGetDelete() {
