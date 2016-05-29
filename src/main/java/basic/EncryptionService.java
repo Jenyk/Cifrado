@@ -8,11 +8,13 @@ import filesystem.FileSystemServiceInterface;
 import filesystem.exceptions.FileSystemException;
 import filesystem.exceptions.InvalidPathException;
 import filesystem.exceptions.PathCollisionException;
+import org.apache.commons.io.FileUtils;
 import org.omg.CORBA.DynAnyPackage.Invalid;
 import security.exceptions.EncryptionException;
 import security.EncryptionProviderInterface;
 import security.IntegrityProviderInterface;
 import security.exceptions.IntegrityException;
+
 import java.io.*;
 import java.nio.file.Path;
 import java.security.spec.InvalidParameterSpecException;
@@ -46,22 +48,22 @@ public class EncryptionService implements EncryptionServiceInterface {
             FileRecord newFile = fileSystemService.createFile(encryptedData, targetPath);
             integrityProvider.trackNewFile(newFile, password);
         } catch (EncryptionException e) {
-            log.log(Level.SEVERE, "Error while encrypting the data", e);
+            log.log(Level.SEVERE, "Error while encrypting the data", e.getMessage());
             throw e;
         } catch (FileSystemException e) {
-            log.log(Level.SEVERE, "File system error while adding the file", e);
+            log.log(Level.SEVERE, "File system error while adding the file", e.getMessage());
             throw e;
         } catch (IntegrityException e) {
-            log.log(Level.SEVERE, "Error while trying to track the file integrity", e);
+            log.log(Level.SEVERE, "Error while trying to track the file integrity", e.getMessage());
             throw e;
         } catch (PathCollisionException e) {
-            log.log(Level.SEVERE, "Trying to add file to a colliding path: " + targetPath, e);
+            log.log(Level.SEVERE, "Trying to add file to a colliding path: " + targetPath, e.getMessage());
             throw e;
         } catch (InvalidPathException e) {
-            log.log(Level.SEVERE, "Trying to add file to an invalid path: " + targetPath, e);
+            log.log(Level.SEVERE, "Trying to add file to an invalid path: " + targetPath, e.getMessage());
             throw e;
         } catch (InvalidParameterSpecException e) {
-            log.log(Level.SEVERE, "Invalid arguments", e);
+            log.log(Level.SEVERE, "Invalid arguments", e.getMessage());
             throw e;
         }
 
@@ -76,6 +78,28 @@ public class EncryptionService implements EncryptionServiceInterface {
     }
 
     @Override
+    public void exportEncrypted(String path, String password, String transferPassword, String dataFolder) throws EncryptionException,
+            FileSystemException, IntegrityException, PathCollisionException, InvalidPathException, InvalidParameterSpecException, IOException {
+        RawFile oldFile = getFile(path, password);
+        String[] pathParts = oldFile.getFileName().split("/");
+        String fileName = pathParts[pathParts.length - 1];
+
+        RawFile transferFile = new RawFile(fileName, oldFile.getData());
+        addFile(transferFile, fileName, transferPassword);
+        integrityProvider.stopTrackingFile(fileName);
+        FileUtils.moveFile(new File(dataFolder + fileName), new File(fileName));
+    }
+
+    @Override
+    public void importEncrypted(String fileName, String targetFolder, String transferPassword, String password, String dataFolder) throws EncryptionException,
+            FileSystemException, IntegrityException, PathCollisionException, InvalidPathException, InvalidParameterSpecException, IOException {
+        FileUtils.moveFile(new File(fileName), new File(dataFolder + fileName));
+        RawFile newFile = getFile(fileName, transferPassword);
+        addFile(newFile, targetFolder, password);
+        new File(dataFolder + fileName).delete();
+    }
+
+    @Override
     public List<EncryptedFileStatus> listFiles(String path, String password) throws InvalidPathException,
             FileSystemException, IntegrityException, InvalidParameterSpecException {
         List<FileRecord> fileList;
@@ -83,10 +107,10 @@ public class EncryptionService implements EncryptionServiceInterface {
         try {
             fileList = fileSystemService.listFiles(path);
         } catch (InvalidPathException e) {
-            log.log(Level.SEVERE, "Trying to list files from an invalid path: " + path, e);
+            log.log(Level.SEVERE, "Trying to list files from an invalid path: " + path, e.getMessage());
             throw e;
         } catch (FileSystemException e) {
-            log.log(Level.SEVERE, "File system error while listing files", e);
+            log.log(Level.SEVERE, "File system error while listing files", e.getMessage());
             throw e;
         }
 
@@ -99,12 +123,12 @@ public class EncryptionService implements EncryptionServiceInterface {
                 if (!isDirectory) { // check for files
                     integrity = integrityProvider.checkFileIntegrity(fileRecord, password);
                 }
-                result.add(new EncryptedFileStatus(fileRecord.getPath(), integrity, fileRecord.isDirectory()));
+                result.add(new EncryptedFileStatus(fileRecord.getPath(), integrity, isDirectory));
             } catch (IntegrityException e) {
-                log.log(Level.SEVERE, "Error trying to check the file integrity for: " + fileRecord.getPath(), e);
+                log.log(Level.SEVERE, "Error trying to check the file integrity for: " + fileRecord.getPath(), e.getMessage());
                 throw e;
             } catch (InvalidParameterSpecException e) {
-                log.log(Level.SEVERE, "Invalid arguments", e);
+                log.log(Level.SEVERE, "Invalid arguments", e.getMessage());
                 throw e;
             }
         }
@@ -119,16 +143,16 @@ public class EncryptionService implements EncryptionServiceInterface {
             integrityProvider.stopTrackingFile(path);
             fileSystemService.deleteFile(path);
         } catch (InvalidPathException e) {
-            log.log(Level.SEVERE, "Invalid arguments", e);
+            log.log(Level.SEVERE, "Invalid arguments", e.getMessage());
             throw e;
         } catch (FileSystemException e) {
-            log.log(Level.SEVERE, "File system error while deleting file", e);
+            log.log(Level.SEVERE, "File system error while deleting file", e.getMessage());
             throw e;
         } catch (IntegrityException e) {
-            log.log(Level.SEVERE, "Error while trying to stop tracking file integrity", e);
+            log.log(Level.SEVERE, "Error while trying to stop tracking file integrity", e.getMessage());
             throw e;
         } catch (InvalidParameterSpecException e) {
-            log.log(Level.SEVERE, "Invalid arguments", e);
+            log.log(Level.SEVERE, "Invalid arguments", e.getMessage());
             throw e;
         }
 
@@ -144,16 +168,16 @@ public class EncryptionService implements EncryptionServiceInterface {
                 return new RawFile(path, decryptedData);
             }
         } catch (InvalidPathException e) {
-            log.log(Level.SEVERE, "Trying to retrieve a file from an invalid path: " + path, e);
+            log.log(Level.SEVERE, "Trying to retrieve a file from an invalid path: " + path, e.getMessage());
             throw e;
         } catch (EncryptionException e) {
-            log.log(Level.SEVERE, "Error while decrypting the data", e);
+            log.log(Level.SEVERE, "Error while decrypting the data", e.getMessage());
             throw e;
         } catch (IOException e) {
-            log.log(Level.SEVERE, "Error while accessing the file", e);
+            log.log(Level.SEVERE, "Error while accessing the file", e.getMessage());
             throw new FileSystemException(e);
         } catch (InvalidParameterSpecException e) {
-            log.log(Level.SEVERE, "Invalid arguments", e);
+            log.log(Level.SEVERE, "Invalid arguments", e.getMessage());
             throw e;
         }
     }
@@ -163,13 +187,13 @@ public class EncryptionService implements EncryptionServiceInterface {
         try {
             fileSystemService.createDirectory(path);
         } catch (InvalidPathException ex) {
-            log.log(Level.SEVERE, "Trying to create a directory with an invalid path: " + path, ex);
+            log.log(Level.SEVERE, "Trying to create a directory with an invalid path: " + path, ex.getMessage());
             throw ex;
         } catch (PathCollisionException ex) {
-            log.log(Level.SEVERE, "Trying to create a directory with a colliding path: " + path, ex);
+            log.log(Level.SEVERE, "Trying to create a directory with a colliding path: " + path, ex.getMessage());
             throw ex;
         } catch (FileSystemException ex) {
-            log.log(Level.SEVERE, "Error while creating the directory", ex);
+            log.log(Level.SEVERE, "Error while creating the directory", ex.getMessage());
             throw ex;
         }
     }
@@ -179,23 +203,23 @@ public class EncryptionService implements EncryptionServiceInterface {
             FileSystemException, InvalidPathException, InvalidParameterSpecException {
         try {
             // We need to stop integrity tracking for all the files
-            for (FileRecord file: fileSystemService.listFilesRecursive(path)) {
+            for (FileRecord file : fileSystemService.listFilesRecursive(path)) {
                 integrityProvider.stopTrackingFile(file.getPath());
             }
 
             fileSystemService.deleteDirectory(path);
 
         } catch (IntegrityException e) {
-            log.log(Level.SEVERE, "Error while trying to stop integrity tracking", e);
+            log.log(Level.SEVERE, "Error while trying to stop integrity tracking", e.getMessage());
             throw e;
         } catch (FileSystemException e) {
-            log.log(Level.SEVERE, "Error while trying to delete the directory", e);
+            log.log(Level.SEVERE, "Error while trying to delete the directory", e.getMessage());
             throw e;
         } catch (InvalidPathException e) {
-            log.log(Level.SEVERE, "Trying to delete a directory with invalid path: " + path, e);
+            log.log(Level.SEVERE, "Trying to delete a directory with invalid path: " + path, e.getMessage());
             throw e;
         } catch (InvalidParameterSpecException e) {
-            log.log(Level.SEVERE, "Invalid arguments", e);
+            log.log(Level.SEVERE, "Invalid arguments", e.getMessage());
             throw e;
         }
     }

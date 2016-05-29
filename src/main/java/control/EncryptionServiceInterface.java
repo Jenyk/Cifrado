@@ -6,6 +6,7 @@ import filesystem.exceptions.PathCollisionException;
 import security.exceptions.EncryptionException;
 import security.exceptions.IntegrityException;
 
+import java.io.IOException;
 import java.security.spec.InvalidParameterSpecException;
 import java.util.List;
 
@@ -18,6 +19,12 @@ public interface EncryptionServiceInterface {
 
     void moveFile(String oldPath, String newPath, String password) throws EncryptionException,
             FileSystemException, IntegrityException, PathCollisionException, InvalidPathException, InvalidParameterSpecException;
+
+    void exportEncrypted(String path, String password, String transferPassword, String dataFolder) throws EncryptionException,
+            FileSystemException, IntegrityException, PathCollisionException, InvalidPathException, InvalidParameterSpecException, IOException;
+
+    void importEncrypted(String fileName, String targetFolder, String transferPassword, String password, String dataFolder) throws EncryptionException,
+            FileSystemException, IntegrityException, PathCollisionException, InvalidPathException, InvalidParameterSpecException, IOException;
 
     List<EncryptedFileStatus> listFiles(String path, String password) throws InvalidPathException,
             FileSystemException, IntegrityException, InvalidParameterSpecException;

@@ -16,4 +16,6 @@ import java.security.spec.InvalidParameterSpecException;
 public interface FolderAdderInterface {
     void addFolder(Path localPath, String targetPath, String password) throws IOException, PathCollisionException,
             EncryptionException, IntegrityException, FileSystemException, InvalidPathException, InvalidParameterSpecException;
+
+    void removeFolder(Path path) throws InvalidPathException, IntegrityException, InvalidParameterSpecException, FileSystemException, IOException;
 }
